@@ -1,0 +1,7 @@
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          private-key: classpath:jwtRS256-key.priv
+          public-key: classpath:jwtRS256-key.pub
