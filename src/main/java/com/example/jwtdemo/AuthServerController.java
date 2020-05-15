@@ -17,36 +17,30 @@ package com.example.jwtdemo;
 
 import com.nimbusds.jose.JOSEException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @RestController
-public class OAuth2ResourceServerController {
+public class AuthServerController {
 
 	@Autowired
 	private JwtToken jwtToken;
 
-	@GetMapping("/")
-	public String index(@AuthenticationPrincipal Jwt jwt) {
-		return String.format("Hello, %s!", jwt.getSubject());
-	}
-
-	@GetMapping("/message")
-	public String message() {
-		return "secret message";
-	}
-
-	@GetMapping("/public-message")
-	public String pulicMessage() {
-		return "public message";
-	}
-
 	@GetMapping("/token/{username}")
-	public String generateToken(
-			@PathVariable(value = "username") String username) throws JOSEException {
-		return jwtToken.generate(username);
+	public Mono<String> generateToken(
+			@PathVariable(value = "username") String username) {
+		return Mono.just(username)
+				.flatMap(un -> Mono.fromCallable(() -> {
+					String token = null;
+					try {
+						token = jwtToken.generate(un);
+					} catch (JOSEException e) {
+						e.printStackTrace();
+					}
+					return token;
+				}).subscribeOn(Schedulers.boundedElastic()));
 	}
 }
